@@ -5,71 +5,113 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.widget.Toast
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ArrayAdapter
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.readextrenalstorage.adapter.FolderAdapter
 import com.example.readextrenalstorage.adapter.TitleAdapter
 import com.example.readextrenalstorage.data.Model
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.bottom_layout.*
 import kotlinx.android.synthetic.main.content_main.*
+import kotlinx.android.synthetic.main.create_view.view.*
 import java.io.File
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
-    private val REQ_CODE_FOR_READ = 1001
-    private val REQ_CODE_FOR_WRITE = 1002
+
+    private val listSpinner = arrayOf(".text", ".docx")
+    private val REQ_CODE = 1001
     private val list = mutableListOf<File>()
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var titleAdapter: TitleAdapter
     private var filePath = ""
     private val myPaths = mutableListOf<Model>()
     private var c = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        folderAdapter = FolderAdapter(this, list) { readFilesFromStorage(it) }
+        folderAdapter = FolderAdapter(this, list,
+            { readFilesFromStorage(it) },
+            { itemLongClicked(it) })
         titleAdapter = TitleAdapter(this, myPaths) { openFoldersByTitle(it) }
         rv.adapter = folderAdapter
         rv_title.adapter = titleAdapter
 
         checkPermission()
 
-        fab.setOnClickListener {
-            checkPermissionToWrite()
+        add.setOnClickListener {
+            createFolder()
         }
 
         lv.setOnClickListener {
             readFilesFromStorage(null)
             myPaths.clear()
-            c= -1
+            c = -1
             filePath = ""
             titleAdapter.notifyDataSetChanged()
         }
     }
 
-    private fun checkPermissionToWrite() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                //TODO()we have permission
+    private fun itemLongClicked(it: View) {
+        bottom_nav.visibility = View.INVISIBLE
+        bottom_nav2.visibility = View.VISIBLE
+//        it.del_chb.visibility = View.VISIBLE   todo add check box all items
+//        it.isClickable = false
+//        isLongClicked = true
+    }
 
-                Toast.makeText(this, "have permission to write", Toast.LENGTH_LONG).show()
-            } else {
-                requestPermissions(
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQ_CODE_FOR_WRITE
-                )
-
-                Toast.makeText(this, "have not permission to write", Toast.LENGTH_LONG).show()
+    private fun createFolder() {
+        val view = LayoutInflater.from(this).inflate(R.layout.create_view, null, false)
+        val dialog = AlertDialog.Builder(this)
+            .setCancelable(false)
+            .setPositiveButton("Save") { _, _ ->
+                val fName = view.et_F_name.text.toString()
+                createFileInStorage(fName)
             }
-        } else {
-            //TODO()we have permission
+            .setView(view)
+            .setNegativeButton("Cancel", null)
+            .create()
 
+        dialog.show()
+
+        setUpSpinner(view)
+        selectItem(view)
+
+    }
+
+    private fun createFileInStorage(fName: String) {
+        val file = File(Environment.getExternalStorageDirectory().toString() + filePath + "/$fName")
+        if (!file.exists()) {
+            val isCreated = file.mkdirs()
+            if (isCreated) {
+                list.add(file)
+                folderAdapter.notifyItemInserted(list.size - 1)
+            }
+        }
+    }
+
+    private fun setUpSpinner(view: View) {
+        val arrayAdapter = ArrayAdapter<String>(
+            this, android.R.layout.simple_spinner_item, listSpinner
+        )
+        arrayAdapter.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+        view.spinner.adapter = arrayAdapter
+    }
+
+    private fun selectItem(view: View) {
+        view.radio_group.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.rb_file) {
+                view.spinner.visibility = View.VISIBLE
+            } else {
+                view.spinner.visibility = View.INVISIBLE
+            }
         }
     }
 
@@ -79,14 +121,20 @@ class MainActivity : AppCompatActivity() {
                     this,
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+                == PackageManager.PERMISSION_GRANTED
             ) {
                 readFilesFromStorage(null)
             } else {
                 requestPermissions(
                     arrayOf(
-                        Manifest.permission.READ_EXTERNAL_STORAGE
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
                     ),
-                    REQ_CODE_FOR_READ
+                    REQ_CODE
                 )
             }
         } else {
@@ -100,15 +148,9 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_CODE_FOR_READ
+        if (requestCode == REQ_CODE
             && grantResults.isNotEmpty()
         ) {
-            readFilesFromStorage(null)
-        } else if (requestCode == REQ_CODE_FOR_WRITE &&
-            grantResults.isNotEmpty()
-        ) {
-//            TODO() we give permission to write
-
             readFilesFromStorage(null)
         }
     }

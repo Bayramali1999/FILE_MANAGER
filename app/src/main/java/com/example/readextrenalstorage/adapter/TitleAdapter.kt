@@ -29,6 +29,7 @@ class TitleAdapter(
 
     class TitleVh(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun onBind(s: Model, listener: (Model) -> Unit) {
+
             itemView.tv_title.text = s.name
 
             itemView.setOnClickListener {
@@ -36,5 +37,4 @@ class TitleAdapter(
             }
         }
     }
-
 }
