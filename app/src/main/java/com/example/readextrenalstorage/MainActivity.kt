@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import com.example.readextrenalstorage.adapter.FolderAdapter
 import com.example.readextrenalstorage.adapter.TitleAdapter
 import com.example.readextrenalstorage.data.Model
-import kotlinx.android.synthetic.main.bottom_layout.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.create_view.view.*
 import java.io.File
@@ -33,28 +32,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.fragment_main)
 
-        folderAdapter = FolderAdapter(this, list,
-            { readFilesFromStorage(it) },
-            { itemLongClicked(it) })
-        titleAdapter = TitleAdapter(this, myPaths) { openFoldersByTitle(it) }
-        rv.adapter = folderAdapter
-        rv_title.adapter = titleAdapter
-
-        checkPermission()
-
-        add.setOnClickListener {
-            createFolder()
-        }
-
-        lv.setOnClickListener {
-            readFilesFromStorage(null)
-            myPaths.clear()
-            c = -1
-            filePath = ""
-            titleAdapter.notifyDataSetChanged()
-        }
+//
+//        folderAdapter = FolderAdapter(this, list,
+//            { readFilesFromStorage(it) },
+//            { itemLongClicked(it) })
+//        titleAdapter = TitleAdapter(this, myPaths) { openFoldersByTitle(it) }
+//        rv.adapter = folderAdapter
+//        rv_title.adapter = titleAdapter
+//
+//        checkPermission()
+//
+//        add.setOnClickListener {
+//            createFolder()
+//        }
+//
+//        lv.setOnClickListener {
+//            readFilesFromStorage(null)
+//            myPaths.clear()
+//            c = -1
+//            filePath = ""
+//            titleAdapter.notifyDataSetChanged()
+//        }
     }
 
     private fun itemLongClicked(it: View) {
